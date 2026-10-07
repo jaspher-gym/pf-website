@@ -4,6 +4,9 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+  // n8n webhook that receives every site form submission.
+  const WEBHOOK_URL = 'https://api.fitnessgrizzly.com/n8n/webhook/a498528e-b6fe-4c06-8503-92600152738d';
+
   // Header behavior
   const header = $('.site-header');
   const body = document.body;
@@ -144,7 +147,7 @@
     }));
   }
 
-  // Quote wizard. Front-end only; final integration point is intentionally left to Jasper.
+  // Quote wizard.
   const quoteForm = $('#quoteWizard');
   if (quoteForm) {
     const steps = $$('.quote-step', quoteForm);
@@ -176,21 +179,61 @@
       if (prev) { e.preventDefault(); show(current - 1); }
     });
 
-    quoteForm.addEventListener('submit', e => {
-      // This build is intentionally front-end-only. Jasper can replace this handler with GHL submission logic.
-      e.preventDefault();
-      const hook = $('.integration-hook', quoteForm);
-      if (hook) hook.style.display = 'block';
-    });
+    quoteForm.addEventListener('submit', e => submitToWebhook(e, quoteForm, 'request-quote'));
     show(0);
   }
 
-  // Front-end form demo behavior. Keeps accidental submissions from going nowhere before integration.
+  // Lead forms (contact, residential repair, sell equipment) post to the same webhook.
   $$('form[data-front-end-only]').forEach(form => {
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const hook = $('.integration-hook', form);
-      if (hook) hook.style.display = 'block';
-    });
+    const formName = location.pathname.split('/').filter(p => p && p !== 'index.html').pop() || 'home';
+    form.addEventListener('submit', e => submitToWebhook(e, form, formName));
   });
+
+  // Form submission. Sends JSON, or multipart when the form has files attached (sell-equipment photos).
+  function submitToWebhook(e, form, formName) {
+    e.preventDefault();
+    const status = $('.integration-hook', form);
+    const submitBtn = $('button[type="submit"]', form);
+    const setStatus = msg => {
+      if (!status) return;
+      status.textContent = msg;
+      status.style.display = 'block';
+    };
+
+    const data = new FormData(form);
+    data.append('form_name', formName);
+    data.append('page_url', location.href);
+    data.append('submitted_at', new Date().toISOString());
+
+    const hasFiles = $$('input[type="file"]', form).some(input => input.files.length);
+    const payload = {};
+    if (!hasFiles) {
+      for (const [key, value] of data.entries()) {
+        if (value instanceof File) continue;
+        payload[key] = value;
+      }
+    }
+
+    if (submitBtn) submitBtn.disabled = true;
+    setStatus('Sending…');
+
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: hasFiles ? undefined : { 'Content-Type': 'application/json' },
+      body: hasFiles ? data : JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
+        form.reset();
+        $$('.option-button.is-selected', form).forEach(b => b.classList.remove('is-selected'));
+        setStatus('Thanks — your request was sent. Priority Fitness will be in touch soon.');
+      })
+      .catch(err => {
+        console.error('Form submission failed:', err);
+        setStatus('Something went wrong sending your request. Please call 920-765-3644 or try again.');
+      })
+      .finally(() => {
+        if (submitBtn) submitBtn.disabled = false;
+      });
+  }
 })();
