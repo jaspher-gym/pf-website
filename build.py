@@ -130,6 +130,10 @@ def page(title, body, description='Priority Fitness fitness-equipment services a
 <meta name="description" content="{escape(description)}">
 {FONT_LINKS}
 <link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="icon" href="/favicon.ico" sizes="32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/images/favicon/apple-touch-icon.png">
 </head>
 <body class="{body_class}">
 {header()}
@@ -582,3 +586,8 @@ print(f'Built {len(pages)} pages')
 
 import make_portable
 make_portable.main()
+
+import seo
+for rel in pages:
+    path = ROOT / rel
+    path.write_text(seo.add_seo_tags(rel, path.read_text(encoding='utf-8')), encoding='utf-8')
