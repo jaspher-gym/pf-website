@@ -2,10 +2,10 @@
 
 The site is authored with root-relative URLs (/assets/..., /about/), which only
 resolve when served from a web server root. After this pass every page works
-both from a server and when opened directly from disk (file://):
+from any web server, at the domain root or in a subfolder:
 
 - /assets/css/styles.css  ->  ../assets/css/styles.css
-- /about/                 ->  ../about/index.html
+- /about/                 ->  ../about/
 - icons.svg sprite is inlined, because browsers block external <use> refs on file://
 
 Safe to run repeatedly. build.py calls it automatically after generating pages.
@@ -23,11 +23,13 @@ SPRITE_MARKER = 'id="pf-icon-sprite"'
 
 
 def rel_url(url, prefix):
+    # Page links keep their clean folder form (../about/), not ../about/index.html
     path, sep, frag = url.partition('#')
     path = path.lstrip('/')
-    if path == '' or path.endswith('/'):
-        path += 'index.html'
-    return prefix + path + (sep + frag if sep else '')
+    out = prefix + path
+    if out == '':
+        out = './'
+    return out + (sep + frag if sep else '')
 
 
 def sprite_markup():

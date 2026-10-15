@@ -15,13 +15,27 @@ SHARE_IMAGE = (f'{SITE}/assets/images/hero-installation-1080.webp', 1080, 613)
 
 ORGANIZATION = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': 'LocalBusiness',
     'name': 'Priority Fitness',
     'url': f'{SITE}/',
     'logo': f'{SITE}/assets/images/priority-fitness-logo.png',
     'image': SHARE_IMAGE[0],
     'telephone': '+1-920-765-3644',
     'email': 'support@pf-pros.com',
+    'address': {
+        '@type': 'PostalAddress',
+        'streetAddress': '101 Mechanic St',
+        'addressLocality': 'Princeton',
+        'addressRegion': 'WI',
+        'postalCode': '54982',
+        'addressCountry': 'US',
+    },
+    'openingHoursSpecification': [{
+        '@type': 'OpeningHoursSpecification',
+        'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        'opens': '08:00',
+        'closes': '17:00',
+    }],
     'sameAs': [
         'https://www.facebook.com/priorityfitnesspros',
         'https://www.google.com/search?kgmid=/g/11jtz8fwsj',
